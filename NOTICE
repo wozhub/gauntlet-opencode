@@ -1,0 +1,75 @@
+# NOTICE
+
+This project is a derivative work. Upstream MIT copyright notices are
+preserved below as required by their licenses.
+
+---
+
+## github.com/duolahypercho/gauntlet-loop
+
+MIT License
+
+Copyright (c) 2026 duolahypercho
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## github.com/mshumer/Claude-of-Duty
+
+MIT License
+
+Copyright (c) 2026 mshumer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## What was carried over
+
+- The three-paragraph aim-prompt skeleton (originated by Matt Shumer;
+  packaged as a slash-command skill by duolahypercho).
+- The "do not invent" anti-pattern list.
+- The `compose only` opt-out.
+
+## What was rewritten
+
+- Host retarget: Claude Code + Codex → opencode.
+- Fictional verbs (`/loop`, `/goal`, `ultracode`) removed.
+- Rhetorical fan-out / critic / blind-compare rewired to real opencode
+  primitives (`task()` with categories/subagents, `oracle`, `visual-qa`,
+  `playwright`, `background_output`).
+- Install model: per-project drop-in, never global.
+- Compose-only is the default; `--run` is opt-in.

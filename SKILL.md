@@ -57,17 +57,27 @@ Only when the user's current message contains `--run` (or "run it",
    `interactive_bash` a real window and a one-shot screenshot tool.
    One light in-game frame — **not** a capture harness. Save to
    `./.gauntlet/frame-<cycle>.png` (untracked).
-6. **Visual gap report.** `task(subagent_type="multimodal-looker", ...)`
-   with the game frame **and** reference stills from `./reference/*.{png,jpg}`
-   if present (else name the reference game). Oracle is text-only; this
-   step is the eyes.
-   ```
-   task(subagent_type="multimodal-looker",
-        prompt="Compare ./.gauntlet/frame-<cycle>.png to the reference
-                stills in ./reference/. Return a plain-text gap list:
-                each gap = one line, format 'AREA: what is wrong'. Do
-                not soften. Do not describe what looks good.")
-   ```
+6. **Visual gap report — parent model reads the frame directly.**
+   **DO NOT** delegate to `task(subagent_type="multimodal-looker")` — that
+   subagent is routed to Haiku 4.5 in the current opencode config and
+   hallucinates ~25% of findings on visual detail (verified in the
+   guerra-chica cycle-1 field trial: 5 of 19 gaps were fabricated —
+   claimed missing features that clearly shipped). Instead:
+   1. `read` `./.gauntlet/frame-<cycle>.png` — attaches the game frame
+      to your (parent) context as an image.
+   2. `read` 3–5 stills from `./reference/*.{png,jpg}` — attaches the
+      target aesthetic images to your context.
+   3. Do the compare **yourself**. Output a plain-text gap list, one
+      line per gap in format `AREA: what is wrong`, 8–20 gaps, no
+      praise, no softening. `AREA` ∈ {palette, material, silhouette,
+      faction-color, terrain, camera, hud, shadow, scale, background,
+      other}.
+
+   **Requires the parent to be image-capable.** If it isn't, this step
+   cannot run correctly — stop the cycle and tell the human. Falling
+   back to multimodal-looker is worse than stopping, because a
+   confidently-wrong gap list poisons step 7 (Oracle plans fixes for
+   phantom problems).
 7. **Critic reasoning.** `task(subagent_type="oracle", ...)` — takes
    multimodal-looker's textual gap list **plus** the game's source paths,
    returns a prioritised, minimal-change fix plan. Oracle blocks the
@@ -114,7 +124,7 @@ If the model can obviously beat `REFERENCE` on day one, pick a harder one.
 | Original phrase | Real tool in opencode |
 |---|---|
 | "fan out sub-agents" | `task(..., run_in_background=true)` × 2–4 |
-| "sub-agent sees the frame" | `task(subagent_type="multimodal-looker", ...)` — eyes on the image |
+| "parent sees the frame" | parent model `read`s the frame + `./reference/*.{png,jpg}` — attaches images to context. **Do NOT** use `multimodal-looker` (downgraded to Haiku 4.5, hallucinates on visual detail) |
 | "separate harsh critic" | `task(subagent_type="oracle", ...)` — reasons about fixes from the gap report |
 | "blind compare side by side" | `skill("playwright")` screenshot + `./reference/*.{png,jpg}` fed to multimodal-looker |
 | "/loop until utterly perfect" | user says "continue"; `background_output()` collects |

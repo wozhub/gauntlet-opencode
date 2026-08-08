@@ -55,13 +55,24 @@ Only when the user's current message contains `--run` (or "run it",
 5. **Screenshot the game.** Use `skill("playwright")` for web stacks
    (THREE.js, Phaser, PixiJS, Babylon). For native (Godot, Unity):
    `interactive_bash` a real window and a one-shot screenshot tool.
-   One light in-game frame — **not** a capture harness.
-6. **Critic pass.** `task(subagent_type="oracle", ...)` with:
-   - the in-game frame,
-   - the reference game name (Oracle knows what COD/Hades/Brotato look like),
-   - explicit ask: "list failing gaps only; do not soften; do not lower the bar".
-   Oracle blocks the final answer — wait for it.
-7. **Report + brake.** One paragraph: what shipped, what Oracle flagged,
+   One light in-game frame — **not** a capture harness. Save to
+   `./.gauntlet/frame-<cycle>.png` (untracked).
+6. **Visual gap report.** `task(subagent_type="multimodal-looker", ...)`
+   with the game frame **and** reference stills from `./reference/*.{png,jpg}`
+   if present (else name the reference game). Oracle is text-only; this
+   step is the eyes.
+   ```
+   task(subagent_type="multimodal-looker",
+        prompt="Compare ./.gauntlet/frame-<cycle>.png to the reference
+                stills in ./reference/. Return a plain-text gap list:
+                each gap = one line, format 'AREA: what is wrong'. Do
+                not soften. Do not describe what looks good.")
+   ```
+7. **Critic reasoning.** `task(subagent_type="oracle", ...)` — takes
+   multimodal-looker's textual gap list **plus** the game's source paths,
+   returns a prioritised, minimal-change fix plan. Oracle blocks the
+   final answer — wait for it.
+8. **Report + brake.** One paragraph: what shipped, top gaps, top fixes,
    current `/cost`. Ask the user to say "continue" or stop. **Do not
    auto-loop.** This is the opencode-specific brake — the original said
    "never ask continue"; here we must, because opencode's gate is per-turn.
@@ -103,8 +114,9 @@ If the model can obviously beat `REFERENCE` on day one, pick a harder one.
 | Original phrase | Real tool in opencode |
 |---|---|
 | "fan out sub-agents" | `task(..., run_in_background=true)` × 2–4 |
-| "separate harsh critic" | `task(subagent_type="oracle", ...)` |
-| "blind compare side by side" | `skill("visual-qa")` + `skill("playwright")` screenshot |
+| "sub-agent sees the frame" | `task(subagent_type="multimodal-looker", ...)` — eyes on the image |
+| "separate harsh critic" | `task(subagent_type="oracle", ...)` — reasons about fixes from the gap report |
+| "blind compare side by side" | `skill("playwright")` screenshot + `./reference/*.{png,jpg}` fed to multimodal-looker |
 | "/loop until utterly perfect" | user says "continue"; `background_output()` collects |
 | "ultracode" | (dead token — dropped) |
 | "you are the brake" | `/cost` + explicit user "continue" per cycle |

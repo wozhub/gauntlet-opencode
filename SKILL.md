@@ -52,36 +52,59 @@ Only when the user's current message contains `--run` (or "run it",
    ```
 4. **Wait.** End response. Collect on `<system-reminder>` via
    `background_output(task_id="bg_...")`. Do not poll.
-5. **Screenshot the game.** Use `skill("playwright")` for web stacks
-   (THREE.js, Phaser, PixiJS, Babylon). For native (Godot, Unity):
-   `interactive_bash` a real window and a one-shot screenshot tool.
-   One light in-game frame — **not** a capture harness. Save to
-   `./.gauntlet/frame-<cycle>.png` (untracked).
+ 5. **Screenshot the game — TWO frames, always.** Use `skill("playwright")`
+    for web stacks (THREE.js, Phaser, PixiJS, Babylon). For native (Godot,
+    Unity): `interactive_bash` a real window and a one-shot screenshot tool.
+    Two light in-game frames — **not** a capture harness:
+    - `./.gauntlet/frame-<cycle>.png` — default/wide framing. Reviews
+      composition, HUD, palette, whole-scene read.
+    - `./.gauntlet/frame-<cycle>-close.png` — zoomed in on the densest
+      cluster of the thing being polished. Reviews detail.
+
+    **Both are mandatory.** A single wide frame cannot distinguish "not
+    built" from "built and invisible" — verified in the guerra-chica field
+    trial, where cycles 4, 5 and 6 each shipped unit and building detail
+    that was sub-pixel in the only frame the critic ever saw, so the critic
+    correctly kept re-requesting work that already existed. Three cycles.
+    If the app has no zoom, add the smallest possible debug hook
+    (`window.__<app>.camera.setZoom/setTarget`) — that is a product
+    feature, not a harness.
 6. **Visual gap report — parent model reads the frame directly.**
    **DO NOT** delegate to `task(subagent_type="multimodal-looker")` — that
    subagent is routed to Haiku 4.5 in the current opencode config and
    hallucinates ~25% of findings on visual detail (verified in the
    guerra-chica cycle-1 field trial: 5 of 19 gaps were fabricated —
    claimed missing features that clearly shipped). Instead:
-   1. `read` `./.gauntlet/frame-<cycle>.png` — attaches the game frame
-      to your (parent) context as an image.
-   2. `read` 3–5 stills from `./reference/*.{png,jpg}` — attaches the
-      target aesthetic images to your context.
-   3. Do the compare **yourself**. Output a plain-text gap list, one
-      line per gap in format `AREA: what is wrong`, 8–20 gaps, no
-      praise, no softening. `AREA` ∈ {palette, material, silhouette,
-      faction-color, terrain, camera, hud, shadow, scale, background,
-      other}.
+    1. `read` **both** `./.gauntlet/frame-<cycle>.png` and
+       `./.gauntlet/frame-<cycle>-close.png` — attaches the wide and the
+       detail frame to your (parent) context as images.
+    2. `read` 3–5 stills from `./reference/*.{png,jpg}` — attaches the
+       target aesthetic images to your context.
+    3. Do the compare **yourself**. Output a plain-text gap list, one
+       line per gap in format `AREA: what is wrong`, 8–20 gaps, no
+       praise, no softening. `AREA` ∈ {palette, material, silhouette,
+       faction-color, terrain, camera, hud, shadow, scale, background,
+       other}.
+    4. **Report two numbers, not impressions:** px per grid cell and px
+       per subject silhouette, in the wide frame, against the same two
+       numbers measured off the reference. These make a framing
+       regression self-evident on cycle 1 instead of cycle 7.
 
    **Requires the parent to be image-capable.** If it isn't, this step
    cannot run correctly — stop the cycle and tell the human. Falling
    back to multimodal-looker is worse than stopping, because a
    confidently-wrong gap list poisons step 7 (Oracle plans fixes for
    phantom problems).
-7. **Critic reasoning.** `task(subagent_type="oracle", ...)` — takes
-   multimodal-looker's textual gap list **plus** the game's source paths,
-   returns a prioritised, minimal-change fix plan. Oracle blocks the
-   final answer — wait for it.
+ 7. **Critic reasoning.** `task(subagent_type="oracle", ...)` — takes the
+    parent's textual gap list **plus** the game's source paths, returns a
+    prioritised, minimal-change fix plan. Oracle blocks the final answer —
+    wait for it.
+
+    **Framing gate — two rules, cheap, and they save whole cycles:**
+    - No detail item may be proposed for a feature that is not measurably
+      visible in the close capture.
+    - No detail item may be proposed at all while a framing or scale item
+      is still open. Fix what the frame shows before adding to it.
 8. **Report + brake.** One paragraph: what shipped, top gaps, top fixes,
    current `/cost`. Ask the user to say "continue" or stop. **Do not
    auto-loop.** This is the opencode-specific brake — the original said
@@ -124,9 +147,9 @@ If the model can obviously beat `REFERENCE` on day one, pick a harder one.
 | Original phrase | Real tool in opencode |
 |---|---|
 | "fan out sub-agents" | `task(..., run_in_background=true)` × 2–4 |
-| "parent sees the frame" | parent model `read`s the frame + `./reference/*.{png,jpg}` — attaches images to context. **Do NOT** use `multimodal-looker` (downgraded to Haiku 4.5, hallucinates on visual detail) |
+| "parent sees the frame" | parent model `read`s **both** frames (wide + close) + `./reference/*.{png,jpg}` — attaches images to context. **Do NOT** use `multimodal-looker` (downgraded to Haiku 4.5, hallucinates on visual detail) |
 | "separate harsh critic" | `task(subagent_type="oracle", ...)` — reasons about fixes from the gap report |
-| "blind compare side by side" | `skill("playwright")` screenshot + `./reference/*.{png,jpg}` fed to multimodal-looker |
+| "blind compare side by side" | `skill("playwright")` wide + close screenshots, read by the parent against `./reference/*.{png,jpg}` |
 | "/loop until utterly perfect" | user says "continue"; `background_output()` collects |
 | "ultracode" | (dead token — dropped) |
 | "you are the brake" | `/cost` + explicit user "continue" per cycle |
